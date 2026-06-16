@@ -355,22 +355,25 @@ export default function AgentConsolePage() {
       <div className="flex gap-2 mb-4">
         <Button
           onClick={() => setActiveTab('products')}
-          variant={activeTab === 'products' ? 'default' : 'outline'}
-          className={activeTab === 'products' ? 'bg-purple-500 hover:bg-purple-600' : ''}
+          className={activeTab === 'products' 
+            ? 'bg-purple-500 hover:bg-purple-600' 
+            : 'bg-transparent border border-white/20 hover:bg-white/5'}
         >
           商品列表
         </Button>
         <Button
           onClick={() => setActiveTab('logs')}
-          variant={activeTab === 'logs' ? 'default' : 'outline'}
-          className={activeTab === 'logs' ? 'bg-purple-500 hover:bg-purple-600' : ''}
+          className={activeTab === 'logs' 
+            ? 'bg-purple-500 hover:bg-purple-600' 
+            : 'bg-transparent border border-white/20 hover:bg-white/5'}
         >
           执行日志
         </Button>
         <Button
           onClick={() => setActiveTab('rawData')}
-          variant={activeTab === 'rawData' ? 'default' : 'outline'}
-          className={activeTab === 'rawData' ? 'bg-amber-500 hover:bg-amber-600' : ''}
+          className={activeTab === 'rawData' 
+            ? 'bg-amber-500 hover:bg-amber-600' 
+            : 'bg-transparent border border-white/20 hover:bg-white/5'}
         >
           原始数据源
         </Button>
