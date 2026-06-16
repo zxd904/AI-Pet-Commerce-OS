@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AI Pet Commerce</string>
+    <string name="title_activity_main">AI Pet Commerce</string>
+    <string name="package_name">com.aipet.commerce</string>
+    <string name="custom_url_scheme">com.aipet.commerce</string>
+</resources>

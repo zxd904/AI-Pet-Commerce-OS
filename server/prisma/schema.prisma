@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int                 @id @default(autoincrement())
+  email              String              @unique
+  passwordHash       String
+  fullName           String
+  phone              String?
+  role               String              @default("user")
+  subscriptionPlan   String              @default("free")
+  subscriptionStatus String              @default("inactive")
+  stripeCustomerId   String?
+  stripeSubscriptionId String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  apiKeys            ApiKey[]
+  userProducts       UserProduct[]
+  analyticsRecords   AnalyticsRecord[]
+}
+
+model ApiKey {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  key       String   @unique
+  name      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserProduct {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  status    String   @default("saved")
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Product {
+  id             Int      @id @default(autoincrement())
+  productName    String   @unique
+  painPoint      String
+  sellingPoints  String
+  viralScore     Int
+  targetUsers    String
+  recommendation String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  content        Content?
+  userProducts   UserProduct[]
+}
+
+model Content {
+  id              Int      @id @default(autoincrement())
+  productId       Int      @unique
+  douyinScript    String
+  xiaohongshuPost String
+  liveScript      String
+  adTitles        String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductItem {
+  id                Int       @id @default(autoincrement())
+  title             String
+  description       String?
+  price             Float
+  cost              Float?
+  profitMargin      Float?
+  score             Int       @default(0)
+  level             String    @default("C")
+  decision          String    @default("WATCH")
+  reason            String?
+  recommendedPrice  Float?
+  expectedProfit    Float?
+  status            String    @default("draft")
+  shopifyId         String?
+  douyinProductId   String?
+  douyinStatus      String?
+  taobaoId          String?
+  pddId             String?
+  imageUrl          String?
+  category          String?
+  supplierPrice     Float?
+  shippingCost      Float?
+  salesVolume       Int?
+  rating            Float?
+  reviewCount       Int?
+  source            String?
+  sourceUrl         String?
+  tags              String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  logs              Log[]
+}
+
+model Log {
+  id          Int      @id @default(autoincrement())
+  productId   Int?
+  action      String
+  result      String
+  message     String?
+  details     String?
+  createdAt   DateTime @default(now())
+
+  product     ProductItem? @relation(fields: [productId], references: [id], onDelete: SetNull)
+}
+
+model Supplier {
+  id            Int      @id @default(autoincrement())
+  name          String
+  platform      String
+  productId     Int?
+  supplierPrice Float
+  moq           Int?
+  leadTime      Int?
+  quality       String?
+  reliability   Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SelectionTask {
+  id          Int      @id @default(autoincrement())
+  status      String   @default("pending")
+  totalItems  Int      @default(0)
+  processed   Int      @default(0)
+  listed      Int      @default(0)
+  rejected    Int      @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SystemConfig {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model AnalyticsRecord {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  metricType String
+  value      Float
+  recordDate DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
