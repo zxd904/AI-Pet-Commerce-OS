@@ -22,9 +22,8 @@ export function validateEmail(email: string): boolean {
 export interface User {
   id: number;
   email: string;
-  fullName: string;
-  subscriptionPlan: string;
-  subscriptionStatus: string;
+  plan: string;
+  expireTime: Date | null;
 }
 
 export interface TokenPayload {
@@ -64,7 +63,7 @@ export async function verifyToken(token: string): Promise<TokenPayload | null> {
   }
 }
 
-export async function registerUser(email: string, password: string, fullName: string): Promise<User> {
+export async function registerUser(email: string, password: string): Promise<User> {
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
     throw new Error('邮箱已被注册');
@@ -75,18 +74,15 @@ export async function registerUser(email: string, password: string, fullName: st
     data: {
       email,
       passwordHash,
-      fullName,
-      subscriptionPlan: 'free',
-      subscriptionStatus: 'active'
+      plan: 'free'
     }
   });
 
   return {
     id: user.id,
     email: user.email,
-    fullName: user.fullName,
-    subscriptionPlan: user.subscriptionPlan,
-    subscriptionStatus: user.subscriptionStatus
+    plan: user.plan,
+    expireTime: user.expireTime
   };
 }
 
@@ -100,9 +96,8 @@ export async function loginUser(email: string, password: string): Promise<User |
   return {
     id: user.id,
     email: user.email,
-    fullName: user.fullName,
-    subscriptionPlan: user.subscriptionPlan,
-    subscriptionStatus: user.subscriptionStatus
+    plan: user.plan,
+    expireTime: user.expireTime
   };
 }
 
@@ -113,9 +108,8 @@ export async function getUserById(userId: number): Promise<User | null> {
   return {
     id: user.id,
     email: user.email,
-    fullName: user.fullName,
-    subscriptionPlan: user.subscriptionPlan,
-    subscriptionStatus: user.subscriptionStatus
+    plan: user.plan,
+    expireTime: user.expireTime
   };
 }
 

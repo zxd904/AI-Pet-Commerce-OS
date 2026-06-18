@@ -6,9 +6,9 @@ const router = express.Router();
 
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, fullName } = req.body;
+    const { email, password } = req.body;
     
-    if (!email || !password || !fullName) {
+    if (!email || !password) {
       return res.status(400).json({ success: false, error: '请填写完整信息' });
     }
 
@@ -20,7 +20,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, error: '密码长度至少为6位' });
     }
 
-    const user = await registerUser(email, password, fullName);
+    const user = await registerUser(email, password);
     const token = await generateToken(user);
 
     res.json({

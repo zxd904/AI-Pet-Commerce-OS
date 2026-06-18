@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Play, RefreshCw, TrendingUp, Package, CheckCircle, XCircle, Clock, BarChart3, Eye, FileQuestion } from 'lucide-react';
+import { Play, RefreshCw, TrendingUp, Package, CheckCircle, XCircle, Clock, BarChart3, Eye, FileQuestion, Zap, FileText } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { useUser } from '../context/UserContext';
+import { useDailyUsage } from '../hooks/useDailyUsage';
 
 interface Product {
   id: number;
@@ -58,9 +60,9 @@ export default function AgentConsolePage() {
   const [activeTab, setActiveTab] = useState<'products' | 'logs' | 'rawData'>('products');
   const [rawProducts, setRawProducts] = useState<RawProduct[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
-  
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
-  const isProOrAbove = user?.subscriptionPlan === 'pro' || user?.subscriptionPlan === 'business';
+
+  const { isProOrAbove } = useUser();
+  const { dailyUsage } = useDailyUsage();
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -293,6 +295,38 @@ export default function AgentConsolePage() {
           </Button>
         </div>
       </div>
+
+      {/* Daily Usage Info */}
+      {dailyUsage && (
+        <div className="glass-card rounded-xl p-4">
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-amber-400" />
+              <div>
+                <span className="text-gray-400 text-sm">AI选品</span>
+                <span className="ml-2 text-white font-medium">
+                  {dailyUsage.selectionsUsed} / {dailyUsage.selectionsLimit}
+                </span>
+                <span className="ml-1 text-gray-500 text-xs">
+                  (今日剩余 {dailyUsage.selectionsRemaining} 次)
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-400" />
+              <div>
+                <span className="text-gray-400 text-sm">内容生成</span>
+                <span className="ml-2 text-white font-medium">
+                  {dailyUsage.generationsUsed} / {dailyUsage.generationsLimit}
+                </span>
+                <span className="ml-1 text-gray-500 text-xs">
+                  (今日剩余 {dailyUsage.generationsRemaining} 次)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="glass-card rounded-xl p-6">

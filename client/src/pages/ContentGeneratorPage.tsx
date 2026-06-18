@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Sparkles, Copy, Check, Video, Heart, Radio, DollarSign, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Sparkles, Copy, Check, Video, Heart, Radio, DollarSign, Loader2, Zap, FileText } from 'lucide-react';
 import { Button, Input } from '../components/ui/Button';
-import { generateContent } from '../services/api';
+import { generateContent, getDailyUsage, DailyUsage } from '../services/api';
 
 interface GeneratedContent {
   douyin_script: string;
@@ -15,18 +15,47 @@ export default function ContentGeneratorPage() {
   const [content, setContent] = useState<GeneratedContent | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [dailyUsage, setDailyUsage] = useState<DailyUsage | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDailyUsage = async () => {
+    try {
+      const response = await getDailyUsage();
+      if (response.success) {
+        setDailyUsage(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch daily usage:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchDailyUsage();
+  }, []);
 
   const handleGenerate = async () => {
     if (!productName.trim()) return;
+    if (dailyUsage && dailyUsage.generationsRemaining <= 0) {
+      setError('今日AI内容生成次数已用完，请升级到专业版或企业版获取更多次数');
+      return;
+    }
 
     setLoading(true);
+    setError(null);
     try {
       const response = await generateContent(productName.trim());
       if (response.success) {
         setContent(response.data);
+        fetchDailyUsage();
+      } else if (response.error) {
+        setError(response.error);
       }
-    } catch (error) {
-      console.error('Failed to generate content:', error);
+    } catch (err: any) {
+      if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else {
+        setError('生成内容时发生错误，请稍后重试');
+      }
     } finally {
       setLoading(false);
     }
@@ -48,6 +77,52 @@ export default function ContentGeneratorPage() {
         <p className="text-gray-400 mt-1">输入产品名称，AI自动生成带货内容</p>
       </div>
 
+      {/* Daily Usage Info */}
+      {dailyUsage && (
+        <div className="glass-card rounded-xl p-4">
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-400" />
+              <div>
+                <span className="text-gray-400 text-sm">内容生成</span>
+                <span className="ml-2 text-white font-medium">
+                  {dailyUsage.generationsUsed} / {dailyUsage.generationsLimit}
+                </span>
+                <span className="ml-1 text-gray-500 text-xs">
+                  (今日剩余 {dailyUsage.generationsRemaining} 次)
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-amber-400" />
+              <div>
+                <span className="text-gray-400 text-sm">AI选品</span>
+                <span className="ml-2 text-white font-medium">
+                  {dailyUsage.selectionsUsed} / {dailyUsage.selectionsLimit}
+                </span>
+                <span className="ml-1 text-gray-500 text-xs">
+                  (今日剩余 {dailyUsage.selectionsRemaining} 次)
+                </span>
+              </div>
+            </div>
+          </div>
+          {dailyUsage.generationsRemaining <= 0 && (
+            <div className="mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <p className="text-red-400 text-sm">
+                今日AI内容生成次数已用完，请升级到专业版或企业版获取无限次数
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="glass-card rounded-xl p-4 bg-red-500/10 border border-red-500/30">
+          <p className="text-red-400">{error}</p>
+        </div>
+      )}
+
       {/* Input Section */}
       <div className="glass-card rounded-xl p-6">
         <div className="flex flex-col md:flex-row gap-4">
@@ -58,7 +133,10 @@ export default function ContentGeneratorPage() {
             className="flex-1"
             onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
           />
-          <Button onClick={handleGenerate} disabled={loading || !productName.trim()}>
+          <Button 
+            onClick={handleGenerate} 
+            disabled={loading || !productName.trim() || (dailyUsage !== null && dailyUsage.generationsRemaining <= 0)}
+          >
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

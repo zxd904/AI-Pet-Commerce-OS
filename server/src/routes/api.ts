@@ -3,7 +3,7 @@ import { prisma } from '../lib/prisma.js';
 import { runSelection, generateAllContent } from '../services/selectionEngine.js';
 import { generateContent } from '../services/llmService.js';
 import { authenticate, requirePlan, AuthenticatedRequest } from '../middleware/auth.js';
-import { checkDailyLimit, recordAnalytics } from '../services/subscriptionService.js';
+import { checkDailyLimit, recordAnalytics, getDailyUsage } from '../services/subscriptionService.js';
 
 const router = express.Router();
 
@@ -203,10 +203,13 @@ router.post('/run-selection', authenticate, async (req: AuthenticatedRequest, re
       });
     }
 
-    await runSelection();
     await recordAnalytics(req.user.id, 'selections');
 
-    res.json({ success: true, message: '选品任务已执行' });
+    runSelection().catch(err => {
+      console.error('选品任务后台执行失败:', err);
+    });
+
+    res.json({ success: true, message: '选品任务已启动，正在后台执行...' });
   }
   catch (error) {
     res.status(500).json({ success: false, error: (error as Error).message });
@@ -220,6 +223,20 @@ router.post('/generate-content', authenticate, async (req: AuthenticatedRequest,
       return res.status(400).json({ success: false, error: '请输入产品名称' });
     }
 
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: '未授权访问' });
+    }
+
+    const allowed = await checkDailyLimit(req.user.id, 'generations');
+    if (!allowed) {
+      return res.status(403).json({
+        success: false,
+        error: '今日AI内容生成次数已用完，请升级到专业版或企业版获取更多次数'
+      });
+    }
+
+    await recordAnalytics(req.user.id, 'generations');
+
     const content = await generateContent(productName);
 
     res.json({
@@ -227,6 +244,31 @@ router.post('/generate-content', authenticate, async (req: AuthenticatedRequest,
       data: {
         ...content,
         adTitles: content.ad_titles
+      }
+    });
+  }
+  catch (error) {
+    res.status(500).json({ success: false, error: (error as Error).message });
+  }
+});
+
+router.get('/daily-usage', authenticate, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: '未授权访问' });
+    }
+
+    const usage = await getDailyUsage(req.user.id);
+
+    res.json({
+      success: true,
+      data: {
+        selectionsUsed: usage.selections,
+        selectionsRemaining: Math.max(0, usage.planLimits.dailySelections - usage.selections),
+        selectionsLimit: usage.planLimits.dailySelections,
+        generationsUsed: usage.generations,
+        generationsRemaining: Math.max(0, usage.planLimits.dailyGenerations - usage.generations),
+        generationsLimit: usage.planLimits.dailyGenerations
       }
     });
   }

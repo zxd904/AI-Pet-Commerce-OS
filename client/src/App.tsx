@@ -9,46 +9,20 @@ import RankingsPage from './pages/RankingsPage';
 import ContentGeneratorPage from './pages/ContentGeneratorPage';
 import AgentConsolePage from './pages/AgentConsolePage';
 import BillingPage from './pages/BillingPage';
+import { UserProvider, useUser } from './context/UserContext';
 
-interface User {
-  id: number;
-  email: string;
-  fullName: string;
-  subscriptionPlan: string;
-  subscriptionStatus: string;
-}
-
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+function AppContent() {
+  const { user, refreshUser } = useUser();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      setIsLoggedIn(true);
-      setUser(JSON.parse(userData));
-    }
+    refreshUser();
   }, []);
-
-  const handleLogin = () => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-    setIsLoggedIn(true);
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    setIsLoggedIn(false);
-    setUser(null);
+    window.location.href = '/';
   };
-
-  if (!isLoggedIn) {
-    return <AuthPage onLogin={handleLogin} />;
-  }
 
   return (
     <BrowserRouter>
@@ -67,6 +41,32 @@ function App() {
         </div>
       </main>
     </BrowserRouter>
+  );
+}
+
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    if (token && userData) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
+
+  if (!isLoggedIn) {
+    return <AuthPage onLogin={handleLogin} />;
+  }
+
+  return (
+    <UserProvider>
+      <AppContent />
+    </UserProvider>
   );
 }
 

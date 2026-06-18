@@ -5,9 +5,8 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: number;
     email: string;
-    fullName: string;
-    subscriptionPlan: string;
-    subscriptionStatus: string;
+    plan: string;
+    expireTime: Date | null;
   };
 }
 
@@ -33,20 +32,20 @@ export async function authenticate(req: AuthenticatedRequest, res: Response, nex
   next();
 }
 
-export async function requirePlan(req: AuthenticatedRequest, res: Response, next: NextFunction, requiredPlan: 'pro' | 'business') {
+export async function requirePlan(req: AuthenticatedRequest, res: Response, next: NextFunction, requiredPlan: 'pro' | 'enterprise') {
   if (!req.user) {
     return res.status(401).json({ success: false, error: '未授权访问' });
   }
 
-  const plans: Record<string, number> = { free: 0, pro: 1, business: 2 };
-  const userPlanLevel = plans[req.user.subscriptionPlan] || 0;
+  const plans: Record<string, number> = { free: 0, pro: 1, enterprise: 2 };
+  const userPlanLevel = plans[req.user.plan] || 0;
   const requiredLevel = plans[requiredPlan] || 0;
 
   if (userPlanLevel < requiredLevel) {
     return res.status(403).json({ 
       success: false, 
-      error: `该功能需要${requiredPlan === 'pro' ? '专业版' : '企业版'}权限`,
-      upgradeUrl: '/api/billing/plans'
+      error: `请升级${requiredPlan === 'pro' ? '专业版' : '企业版'}`,
+      requiredPlan
     });
   }
 

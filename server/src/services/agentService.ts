@@ -218,13 +218,22 @@ export async function scoreProduct(product: ProductDataSource): Promise<ProductD
 // 批量评分
 export async function scoreProductsBatch(products: ProductDataSource[]): Promise<ProductDecision[]> {
   console.log(`🔄 开始对 ${products.length} 个商品进行AI评分...`);
-  const decisions: ProductDecision[] = [];
+  
+  const promises = products.map(async (product) => {
+    try {
+      return await Promise.race([
+        scoreProduct(product),
+        new Promise<ProductDecision>((_, reject) => 
+          setTimeout(() => reject(new Error('AI评分超时')), 30000)
+        )
+      ]);
+    } catch (error) {
+      console.error(`❌ 商品评分失败(跳过): ${product.title.substring(0, 30)}`);
+      return generateFallbackDecision(product);
+    }
+  });
 
-  for (const product of products) {
-    const decision = await scoreProduct(product);
-    decisions.push(decision);
-  }
-
+  const decisions = await Promise.all(promises);
   console.log(`✅ 完成评分，共 ${decisions.length} 个商品`);
   return decisions;
 }

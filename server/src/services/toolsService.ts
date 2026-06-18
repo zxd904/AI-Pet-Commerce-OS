@@ -17,6 +17,25 @@ export async function createProduct(
   decision: ProductDecision
 ): Promise<ToolResult> {
   try {
+    // 检查是否已存在相同标题的商品（去重）
+    const existingProduct = await prisma.productItem.findFirst({
+      where: {
+        title: {
+          contains: product.title.substring(0, 50)
+        },
+        source: product.source
+      }
+    });
+
+    if (existingProduct) {
+      console.log(`ℹ️ [create_product] 跳过重复商品: ${product.title.substring(0, 30)}...`);
+      return {
+        success: false,
+        message: '商品已存在，跳过',
+        data: { productId: existingProduct.id, title: product.title }
+      };
+    }
+
     // 生成商品描述
     const description = await generateProductDescription(product);
 
@@ -283,6 +302,7 @@ export async function runAutoSelection(): Promise<{
 
     // Step 3: 创建所有商品草稿
     const createdProducts: { id: number; decision: ProductDecision }[] = [];
+    let skipped = 0;
     
     for (let i = 0; i < products.length; i++) {
       const product = products[i];
@@ -290,10 +310,14 @@ export async function runAutoSelection(): Promise<{
       
       // 创建商品草稿
       const result = await createProduct(product, decision);
-      if (result.success && result.data?.productId) {
+      if (result.data?.productId) {
         createdProducts.push({ id: result.data.productId, decision });
+      } else if (!result.success) {
+        skipped++;
       }
     }
+
+    console.log(`📊 创建商品完成: 成功${createdProducts.length}个, 跳过${skipped}个`);
 
     // Step 4: 筛选TOP20并上架
     const topProducts = createdProducts

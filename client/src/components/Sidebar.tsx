@@ -1,5 +1,6 @@
-import { LayoutDashboard, Package, Trophy, Sparkles, Cat, Bot, LogOut, User, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Package, Trophy, Sparkles, Cat, Bot, LogOut, User, CreditCard, Zap, FileText } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useDailyUsage } from '../hooks/useDailyUsage';
 
 const navItems = [
   { icon: LayoutDashboard, label: '仪表盘', path: '/' },
@@ -13,9 +14,8 @@ const navItems = [
 interface User {
   id: number;
   email: string;
-  fullName: string;
-  subscriptionPlan: string;
-  subscriptionStatus: string;
+  plan: string;
+  expireTime: string | null;
 }
 
 interface SidebarProps {
@@ -26,11 +26,12 @@ interface SidebarProps {
 const planNames: Record<string, string> = {
   free: '免费版',
   pro: '专业版',
-  business: '企业版'
+  enterprise: '企业版'
 };
 
 export default function Sidebar({ user, onLogout }: SidebarProps) {
   const location = useLocation();
+  const { dailyUsage } = useDailyUsage();
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 glass border-r border-white/10 z-50">
@@ -76,10 +77,26 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
                 <User className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-white">{user.fullName}</p>
-                <p className="text-xs text-gray-400">{planNames[user.subscriptionPlan] || user.subscriptionPlan}</p>
+                <p className="text-sm font-medium text-white">{user.email}</p>
+                <p className="text-xs text-gray-400">{planNames[user.plan] || user.plan}</p>
               </div>
             </div>
+            {dailyUsage && (
+              <div className="mt-3 pt-3 border-t border-white/10">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-amber-400" />
+                    <span className="text-gray-400">选品</span>
+                    <span className="text-white">{dailyUsage.selectionsRemaining}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <FileText className="w-3 h-3 text-blue-400" />
+                    <span className="text-gray-400">生成</span>
+                    <span className="text-white">{dailyUsage.generationsRemaining}</span>
+                  </div>
+                </div>
+              </div>
+            )}
             <button
               onClick={onLogout}
               className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition"

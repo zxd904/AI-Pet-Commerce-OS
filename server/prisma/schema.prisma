@@ -11,30 +11,28 @@ model User {
   id                 Int                 @id @default(autoincrement())
   email              String              @unique
   passwordHash       String
-  fullName           String
-  phone              String?
-  role               String              @default("user")
-  subscriptionPlan   String              @default("free")
-  subscriptionStatus String              @default("inactive")
-  stripeCustomerId   String?
-  stripeSubscriptionId String?
+  plan               String              @default("free")
+  expireTime         DateTime?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
-  apiKeys            ApiKey[]
   userProducts       UserProduct[]
   analyticsRecords   AnalyticsRecord[]
+  orders             Order[]
 }
 
-model ApiKey {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  key       String   @unique
-  name      String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+model Order {
+  id                Int      @id @default(autoincrement())
+  orderNo           String   @unique
+  userId            Int
+  amount            Float
+  plan              String
+  status            String   @default("pending")
+  paymentMethod     String?
+  createdAt         DateTime @default(now())
+  paidAt            DateTime?
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserProduct {

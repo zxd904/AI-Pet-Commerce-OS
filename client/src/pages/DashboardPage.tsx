@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Package, Trophy, Sparkles, RefreshCw, Database, FileQuestion } from 'lucide-react';
+import { LayoutDashboard, Package, Trophy, Sparkles, RefreshCw, Database, FileQuestion, Zap, FileText } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { getDashboard, runSelection, DashboardData } from '../services/api';
+import { useDailyUsage } from '../hooks/useDailyUsage';
 import { formatDate, getScoreColor, getRecommendationColor } from '../lib/utils';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -26,6 +27,8 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
+  const { dailyUsage, refreshUsage } = useDailyUsage();
 
   useEffect(() => {
     fetchDashboard();
@@ -35,7 +38,7 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       const response = await getDashboard();
-      if (response.success) {
+      if (response && response.success) {
         setData(response.data);
       }
     } catch (error) {
@@ -47,11 +50,16 @@ export default function DashboardPage() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
+    setError('');
     try {
       await runSelection();
       await fetchDashboard();
-    } catch (error) {
+      await refreshUsage();
+    } catch (error: any) {
       console.error('Failed to refresh:', error);
+      if (error.response?.status === 403) {
+        setError(error.response.data?.error || '今日AI选品次数已用完，请升级到专业版或企业版');
+      }
     } finally {
       setRefreshing(false);
     }
@@ -78,11 +86,51 @@ export default function DashboardPage() {
           </h1>
           <p className="text-gray-400 mt-1">实时监控爆款选品数据</p>
         </div>
-        <Button onClick={handleRefresh} disabled={refreshing}>
+        <Button onClick={handleRefresh} disabled={refreshing || (dailyUsage !== null && dailyUsage.selectionsRemaining <= 0)}>
           <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
           {refreshing ? '刷新中...' : '立即选品'}
         </Button>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4 flex items-center gap-3">
+          <span className="text-red-400 text-lg">⚠</span>
+          <span className="text-red-400">{error}</span>
+        </div>
+      )}
+
+      {/* Daily Usage Info */}
+      {dailyUsage && (
+        <div className="glass-card rounded-xl p-4">
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-amber-400" />
+              <div>
+                <span className="text-gray-400 text-sm">AI选品</span>
+                <span className="ml-2 text-white font-medium">
+                  {dailyUsage.selectionsUsed} / {dailyUsage.selectionsLimit}
+                </span>
+                <span className="ml-1 text-gray-500 text-xs">
+                  (今日剩余 {dailyUsage.selectionsRemaining} 次)
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-400" />
+              <div>
+                <span className="text-gray-400 text-sm">内容生成</span>
+                <span className="ml-2 text-white font-medium">
+                  {dailyUsage.generationsUsed} / {dailyUsage.generationsLimit}
+                </span>
+                <span className="ml-1 text-gray-500 text-xs">
+                  (今日剩余 {dailyUsage.generationsRemaining} 次)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

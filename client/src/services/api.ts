@@ -19,7 +19,9 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/';
+      if (window.location.pathname !== '/') {
+        window.location.href = '/';
+      }
     }
     return Promise.reject(error);
   }
@@ -82,6 +84,42 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+export interface Plan {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  billingPeriod: string;
+  features: string[];
+}
+
+export interface OrderResponse {
+  success: boolean;
+  orderNo?: string;
+  amount?: number;
+  payUrl?: string;
+  qrCodeUrl?: string;
+  message?: string;
+  error?: string;
+}
+
+export interface UserPlan {
+  plan: string;
+  expireTime: string | null;
+}
+
+export interface User {
+  id: number;
+  email: string;
+  plan: string;
+  expireTime: string | null;
+}
+
+export async function getAuthMe(): Promise<ApiResponse<User>> {
+  const response = await api.get('/auth/me');
+  return response.data;
+}
+
 export async function getDashboard(): Promise<ApiResponse<DashboardData>> {
   const response = await api.get('/dashboard');
   return response.data;
@@ -121,6 +159,54 @@ export async function generateContent(productName: string): Promise<ApiResponse<
   ad_titles: string[];
 }>> {
   const response = await api.post('/generate-content', { productName });
+  return response.data;
+}
+
+export async function getPlans(): Promise<ApiResponse<Plan[]>> {
+  const response = await api.get('/billing/plans');
+  return response.data;
+}
+
+export async function getUserPlan(): Promise<ApiResponse<UserPlan>> {
+  const response = await api.get('/billing/plan');
+  return response.data;
+}
+
+export async function createOrder(plan: string): Promise<OrderResponse> {
+  const response = await api.post('/billing/order/create', { plan });
+  return response.data;
+}
+
+export async function getOrderStatus(orderNo: string): Promise<ApiResponse<{
+  orderNo: string;
+  status: string;
+  amount: number;
+  plan: string;
+}>> {
+  const response = await api.get('/billing/order/status', { params: { orderNo } });
+  return response.data;
+}
+
+export async function switchPlan(plan: string): Promise<ApiResponse<{
+  message?: string;
+  plan: string;
+  expireTime: string | null;
+}>> {
+  const response = await api.post('/billing/switch-plan', { plan });
+  return response.data;
+}
+
+export interface DailyUsage {
+  selectionsUsed: number;
+  selectionsRemaining: number;
+  selectionsLimit: number;
+  generationsUsed: number;
+  generationsRemaining: number;
+  generationsLimit: number;
+}
+
+export async function getDailyUsage(): Promise<ApiResponse<DailyUsage>> {
+  const response = await api.get('/daily-usage');
   return response.data;
 }
 
