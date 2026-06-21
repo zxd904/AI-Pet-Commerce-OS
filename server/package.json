@@ -1,7 +1,6 @@
 {
   "name": "ai-pet-server",
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
