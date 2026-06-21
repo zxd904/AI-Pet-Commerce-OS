@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+// 生产环境使用完整URL，开发环境使用相对路径（通过vite代理）
+const baseURL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL,
   timeout: 60000,
 });
 

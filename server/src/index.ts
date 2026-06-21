@@ -25,7 +25,14 @@ if (process.env.DOUYIN_APP_ID && process.env.DOUYIN_APP_SECRET) {
   console.log('⚠️ 抖音小店API未配置，上架功能将使用模拟模式');
 }
 
-app.use(cors());
+// CORS配置 - 支持生产环境
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 
 app.use('/api/auth', authRouter);
@@ -45,7 +52,8 @@ app.get('/api/health', (req, res) => {
 
 async function startServer() {
   app.listen(PORT, () => {
-    console.log(`🚀 AI宠物选品系统运行在 http://localhost:${PORT}`);
+    console.log(`🚀 AI宠物选品系统运行在端口 ${PORT}`);
+    console.log(`🌐 环境: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🤖 AI引擎: ${MODEL_CONFIG.provider} (${MODEL_CONFIG.model})`);
     console.log(`📍 Ollama地址: ${MODEL_CONFIG.baseUrl}`);
     console.log(`🔧 功能模块: 用户认证 + 订阅付费 + 自动选品 + 自动上架 + Tool Calling`);

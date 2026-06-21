@@ -122,12 +122,13 @@ router.post('/order/create', authenticate, async (req: AuthenticatedRequest, res
     });
 
     const PAY_KEY = process.env.PAY_KEY || 'ai-pet-pay-secret';
+    const baseUrl = process.env.BASE_URL || process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : '';
     const payParams: Record<string, any> = {
       orderNo,
       amount: planInfo.price,
       plan,
       timestamp: Date.now(),
-      notifyUrl: `${process.env.BASE_URL || 'http://localhost:3001'}/api/payment/notify`
+      notifyUrl: `${baseUrl}/api/payment/notify`
     };
     const sign = generateSign(payParams, PAY_KEY);
     payParams['sign'] = sign;

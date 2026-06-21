@@ -5,6 +5,9 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+// 开发环境API地址
+const DEV_API_URL = 'http://localhost:3001'
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -16,13 +19,17 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: DEV_API_URL,
         changeOrigin: true
       },
       '/agent': {
-        target: 'http://localhost:3001',
+        target: DEV_API_URL,
         changeOrigin: true
       }
     }
+  },
+  // 生产环境配置
+  define: {
+    'import.meta.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || '')
   }
 })

@@ -4,6 +4,11 @@ import { Button } from '../components/ui/Button';
 import { useUser } from '../context/UserContext';
 import { useDailyUsage } from '../hooks/useDailyUsage';
 
+// 获取API基础URL
+const getApiBaseUrl = () => {
+  return import.meta.env.VITE_API_URL || '';
+};
+
 interface Product {
   id: number;
   title: string;
@@ -79,7 +84,7 @@ export default function AgentConsolePage() {
   const fetchRawData = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/agent/run-scan', {
+      const res = await fetch(`${getApiBaseUrl()}/agent/run-scan`, {
         method: 'POST',
         headers: getAuthHeaders()
       });
@@ -100,7 +105,7 @@ export default function AgentConsolePage() {
 
   const fetchDashboard = async () => {
     try {
-      const res = await fetch('/agent/dashboard', {
+      const res = await fetch(`${getApiBaseUrl()}/agent/dashboard`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -114,7 +119,7 @@ export default function AgentConsolePage() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch('/agent/products/top?limit=20', {
+      const res = await fetch(`${getApiBaseUrl()}/agent/products/top?limit=20`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -128,7 +133,7 @@ export default function AgentConsolePage() {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch('/agent/logs?limit=50', {
+      const res = await fetch(`${getApiBaseUrl()}/agent/logs?limit=50`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -144,7 +149,7 @@ export default function AgentConsolePage() {
     setLoading(true);
     setIsRunning(true);
     try {
-      const res = await fetch('/agent/auto-list', {
+      const res = await fetch(`${getApiBaseUrl()}/agent/auto-list`, {
         method: 'POST',
         headers: getAuthHeaders()
       });
@@ -170,7 +175,7 @@ export default function AgentConsolePage() {
   const runScan = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/agent/run-scan', {
+      const res = await fetch(`${getApiBaseUrl()}/agent/run-scan`, {
         method: 'POST',
         headers: getAuthHeaders()
       });
@@ -191,7 +196,7 @@ export default function AgentConsolePage() {
 
   const publishProduct = async (productId: number) => {
     try {
-      const res = await fetch('/agent/publish-product', {
+      const res = await fetch(`${getApiBaseUrl()}/agent/publish-product`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ productId })
@@ -211,7 +216,7 @@ export default function AgentConsolePage() {
 
   const rollbackProduct = async (productId: number) => {
     try {
-      const res = await fetch('/agent/rollback-product', {
+      const res = await fetch(`${getApiBaseUrl()}/agent/rollback-product`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ productId })
@@ -229,7 +234,7 @@ export default function AgentConsolePage() {
 
   const publishToDouyin = async (productId: number) => {
     try {
-      const res = await fetch('/agent/publish-douyin', {
+      const res = await fetch(`${getApiBaseUrl()}/agent/publish-douyin`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ productId })
