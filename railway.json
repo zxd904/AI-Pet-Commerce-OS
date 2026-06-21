@@ -5,7 +5,7 @@
   },
   "deploy": {
     "rootDirectory": "server",
-    "startCommand": "cd server && npm run db:migrate && npm start",
+    "startCommand": "npm run db:migrate && npm start",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
